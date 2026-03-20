@@ -33,24 +33,23 @@ pipeline {
         }
 
         stage('Analyze Code Quality') {
-            steps {
-                withSonarQubeEnv('sonarqube') {
-                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                        script {
-                            docker.image('maven:3.8.8-eclipse-temurin-8').inside {
-                                sh '''
-                                    mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar \
-                                      -Dsonar.projectKey=java-app \
-                                      -Dsonar.host.url=$SONAR_HOST_URL \
-                                      -Dsonar.login=$SONAR_TOKEN
-                                '''
-                            }
-                        }
+    steps {
+        withSonarQubeEnv('sonarqube') {
+            withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                script {
+                    docker.image('maven:3.8.8-eclipse-temurin-8').inside('--network ci_network') {
+                        sh '''
+                            mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar \
+                              -Dsonar.projectKey=java-app \
+                              -Dsonar.host.url=http://sonar:9000 \
+                              -Dsonar.login=$SONAR_TOKEN
+                        '''
                     }
                 }
             }
         }
-
+    }
+}
         stage('Build Docker Image') {
             steps {
                 sh 'docker build -t $IMAGE_NAME .'
