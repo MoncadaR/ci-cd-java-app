@@ -39,7 +39,7 @@ pipeline {
                         script {
                             docker.image('maven:3.8.8-eclipse-temurin-8').inside {
                                 sh '''
-                                    mvn sonar:sonar \
+                                    mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar \
                                       -Dsonar.projectKey=java-app \
                                       -Dsonar.host.url=$SONAR_HOST_URL \
                                       -Dsonar.login=$SONAR_TOKEN
@@ -57,7 +57,7 @@ pipeline {
             }
         }
 
-        stage('Push to Docker Hub') {
+        stage('Push to Docker Registry') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh '''
