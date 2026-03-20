@@ -8,14 +8,14 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                git branch: 'main', url:  'https://github.com/MoncadaR/ci-cd-java-app.git'
+                git branch: 'main', url: 'https://github.com/MoncadaR/ci-cd-java-app.git'
             }
         }
 
         stage('Build the Java Application') {
             steps {
                 script {
-                    docker.image('maven:3.9.6-eclipse-temurin-17').inside('-v $HOME/.m2:/root/.m2') {
+                    docker.image('maven:3.9.6-eclipse-temurin-17').inside {
                         sh 'mvn clean package -DskipTests'
                     }
                 }
@@ -25,7 +25,7 @@ pipeline {
         stage('Run Unit Tests') {
             steps {
                 script {
-                    docker.image('maven:3.9.6-eclipse-temurin-11').inside('-v $HOME/.m2:/root/.m2') {
+                    docker.image('maven:3.9.6-eclipse-temurin-11').inside {
                         sh 'mvn test'
                     }
                 }
@@ -37,7 +37,7 @@ pipeline {
                 withSonarQubeEnv('sonarqube') {
                     withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
                         script {
-                            docker.image('maven:3.8.8-eclipse-temurin-8').inside('-v $HOME/.m2:/root/.m2') {
+                            docker.image('maven:3.8.8-eclipse-temurin-8').inside {
                                 sh '''
                                     mvn sonar:sonar \
                                       -Dsonar.projectKey=java-app \
