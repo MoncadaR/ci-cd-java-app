@@ -2,57 +2,49 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'moncadar/java-app:latest'
+        DOCKER_IMAGE = 'moncadar/java-app:latest'
+        SONAR_HOST_URL = 'http://sonar:9000'
     }
 
     stages {
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/MoncadaR/ci-cd-java-app.git'
             }
         }
 
-        stage('Build the Java Application') {
+        stage('Build and Test') {
             steps {
                 script {
-                    docker.image('maven:3.9.6-eclipse-temurin-17').inside {
-                        sh 'mvn clean package -DskipTests'
-                    }
-                }
-            }
-        }
-
-        stage('Run Unit Tests') {
-            steps {
-                script {
-                    docker.image('maven:3.9.6-eclipse-temurin-11').inside {
-                        sh 'mvn test'
+                    docker.image('maven:3.9.6-eclipse-temurin-17').inside('--network ci_network') {
+                        sh 'mvn clean test package'
                     }
                 }
             }
         }
 
         stage('Analyze Code Quality') {
-    steps {
-        withSonarQubeEnv('sonarqube') {
-            withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                script {
-                    docker.image('maven:3.9.6-eclipse-temurin-17').inside('--network ci_network') {
-                        sh '''
-                            mvn org.sonarsource.scanner.maven:sonar-maven-plugin:5.5.0.6356:sonar \
-                              -Dsonar.projectKey=java-app \
-                              -Dsonar.host.url=http://sonar:9000 \
-                              -Dsonar.token=$SONAR_TOKEN
-                        '''
+            steps {
+                withSonarQubeEnv('sonarqube') {
+                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                        script {
+                            docker.image('maven:3.9.6-eclipse-temurin-17').inside('--network ci_network') {
+                                sh '''
+                                    mvn org.sonarsource.scanner.maven:sonar-maven-plugin:5.5.0.6356:sonar \
+                                      -Dsonar.projectKey=java-app \
+                                      -Dsonar.host.url=$SONAR_HOST_URL \
+                                      -Dsonar.token=$SONAR_TOKEN
+                                '''
+                            }
+                        }
                     }
                 }
             }
         }
-    }
-}
+
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE_NAME .'
+                sh 'docker build -t $DOCKER_IMAGE .'
             }
         }
 
@@ -61,23 +53,37 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh '''
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker push $IMAGE_NAME
+                        docker push $DOCKER_IMAGE
                     '''
                 }
             }
         }
 
         stage('Deploy to Kubernetes') {
-    steps {
-        withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
-            script {
-                docker.image('bitnami/kubectl:latest').inside('--network ci_network') {
-                    sh '''
-                        export KUBECONFIG=$KUBECONFIG_FILE
-                        kubectl apply -f deployment.yaml
-                    '''
+            steps {
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
+                    script {
+                        docker.image('bitnami/kubectl:latest').inside('--network ci_network') {
+                            sh '''
+                                export KUBECONFIG=$KUBECONFIG_FILE
+                                kubectl apply -f deployment.yaml
+                            '''
+                        }
+                    }
                 }
             }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully.'
+        }
+        failure {
+            echo 'Pipeline failed.'
+        }
+        always {
+            cleanWs()
         }
     }
 }
