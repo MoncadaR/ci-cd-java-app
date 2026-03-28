@@ -68,7 +68,9 @@ pipeline {
         }
 
         stage('Deploy to Kubernetes') {
-            steps {
+    steps {
+        script {
+            docker.image('bitnami/kubectl:latest').inside('--network ci_network') {
                 sh 'kubectl apply -f deployment.yaml'
             }
         }
