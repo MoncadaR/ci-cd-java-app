@@ -69,9 +69,14 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
     steps {
-        script {
-            docker.image('bitnami/kubectl:latest').inside('--network ci_network') {
-                sh 'kubectl apply -f deployment.yaml'
+        withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
+            script {
+                docker.image('bitnami/kubectl:latest').inside('--network ci_network') {
+                    sh '''
+                        export KUBECONFIG=$KUBECONFIG_FILE
+                        kubectl apply -f deployment.yaml
+                    '''
+                }
             }
         }
     }
