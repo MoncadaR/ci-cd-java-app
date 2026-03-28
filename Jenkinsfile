@@ -67,8 +67,8 @@ pipeline {
                     sh '''
                         kubectl config current-context
                         kubectl get nodes
-                        kubectl apply -f k8s/deployment.yaml
-                        kubectl apply -f k8s/service.yaml
+                        kubectl apply -f /deployment.yaml
+                        kubectl apply -f service.yaml
                     '''
                 }
             }
