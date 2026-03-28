@@ -60,17 +60,17 @@ pipeline {
         }
 
         stage('Deploy to Kubernetes') {
-            steps {
-                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
-                    script {
-                        docker.image('bitnami/kubectl:latest').inside('--network ci_network') {
-                            sh '''
-                                export KUBECONFIG=$KUBECONFIG_FILE
-                                kubectl apply -f deployment.yaml
-                            '''
-                        }
-                    }
-                }
+    steps {
+        withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
+            sh '''
+                export KUBECONFIG=$KUBECONFIG_FILE
+                kubectl get nodes
+                kubectl apply -f k8s/deployment.yaml
+                kubectl apply -f k8s/service.yaml
+            '''
+        }
+    }
+}
             }
         }
     }
