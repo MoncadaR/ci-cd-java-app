@@ -37,9 +37,9 @@ pipeline {
         withSonarQubeEnv('sonarqube') {
             withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
                 script {
-                    docker.image('maven:3.8.8-eclipse-temurin-8').inside('--network ci_network') {
+                    docker.image('maven:3.9.6-eclipse-temurin-17').inside {
                         sh '''
-                            mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar \
+                            mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
                               -Dsonar.projectKey=java-app \
                               -Dsonar.host.url=http://sonar:9000 \
                               -Dsonar.login=$SONAR_TOKEN
