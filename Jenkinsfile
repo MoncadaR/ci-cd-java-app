@@ -68,28 +68,7 @@ pipeline {
 
        stage('Deploy to Kubernetes') {
     steps {
-        withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
-            sh '''
-                set -e
-
-                echo "Available contexts:"
-                kubectl config get-contexts
-
-                echo "Switching to docker-desktop..."
-                kubectl config use-context docker-desktop
-
-                echo "Verifying cluster..."
-                kubectl config current-context
-                kubectl get nodes
-
-                echo "Applying deployment..."
-                kubectl apply -f deployment.yaml
-
-                echo "Checking deployment..."
-                kubectl get deployments
-                kubectl get pods -o wide
-            '''
-        }
+        sh 'kubectl --kubeconfig=/root/.kube/config apply -f k8s/deployment.yaml --validate=false'
     }
 }
     }
