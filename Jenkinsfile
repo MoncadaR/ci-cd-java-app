@@ -71,14 +71,15 @@ pipeline {
         sh '''
             set -e
 
+            echo "Checking cluster inside minikube..."
             docker exec minikube kubectl config current-context
             docker exec minikube kubectl get nodes
 
+            echo "Copying deployment manifest..."
             docker cp deployment.yaml minikube:/tmp/deployment.yaml
-            docker cp service.yaml minikube:/tmp/service.yaml
 
+            echo "Applying deployment..."
             docker exec minikube kubectl apply -f /tmp/deployment.yaml
-            docker exec minikube kubectl apply -f /tmp/service.yaml
         '''
     }
 }
