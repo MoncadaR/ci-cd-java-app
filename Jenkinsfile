@@ -72,14 +72,18 @@ pipeline {
             set -e
 
             echo "Checking cluster inside minikube..."
-            docker exec minikube kubectl config current-context
-            docker exec minikube kubectl get nodes
+            docker exec minikube minikube kubectl -- config current-context
+            docker exec minikube minikube kubectl -- get nodes
 
             echo "Copying deployment manifest..."
             docker cp deployment.yaml minikube:/tmp/deployment.yaml
 
             echo "Applying deployment..."
-            docker exec minikube kubectl apply -f /tmp/deployment.yaml
+            docker exec minikube minikube kubectl -- apply -f /tmp/deployment.yaml
+
+            echo "Checking workloads..."
+            docker exec minikube minikube kubectl -- get deployments
+            docker exec minikube minikube kubectl -- get pods -o wide
         '''
     }
 }
