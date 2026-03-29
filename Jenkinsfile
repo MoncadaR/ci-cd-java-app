@@ -66,7 +66,7 @@ pipeline {
         }
 
 
-        stage('Deploy to Kubernetes') {
+       stage('Deploy to Kubernetes') {
     steps {
         withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
             sh '''
@@ -78,7 +78,7 @@ pipeline {
                 echo "Switching to docker-desktop..."
                 kubectl config use-context docker-desktop
 
-                echo "Verifying active context..."
+                echo "Verifying cluster..."
                 kubectl config current-context
                 kubectl get nodes
 
