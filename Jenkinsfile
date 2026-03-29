@@ -68,7 +68,7 @@ pipeline {
 
        stage('Deploy to Kubernetes') {
     steps {
-        sh 'kubectl --kubeconfig=/root/.kube/config apply -f k8s/deployment.yaml --validate=false'
+        sh 'kubectl --kubeconfig=/root/.kube/config apply -f deployment.yaml --validate=false'
     }
 }
     }
