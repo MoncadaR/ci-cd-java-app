@@ -65,17 +65,23 @@ pipeline {
             }
         }
 
+
         stage('Deploy to Kubernetes') {
-            steps {
-                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
-                    sh '''
-                        kubectl config current-context
-                        kubectl get nodes
-                        kubectl apply -f deployment.yaml
-                    '''
-                }
-            }
-        }
+    steps {
+        sh '''
+            set -e
+
+            docker exec minikube kubectl config current-context
+            docker exec minikube kubectl get nodes
+
+            docker cp deployment.yaml minikube:/tmp/deployment.yaml
+            docker cp service.yaml minikube:/tmp/service.yaml
+
+            docker exec minikube kubectl apply -f /tmp/deployment.yaml
+            docker exec minikube kubectl apply -f /tmp/service.yaml
+        '''
+    }
+}
     }
 
     post {
