@@ -68,23 +68,28 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
     steps {
-        sh '''
-            set -e
+        withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+            sh '''
+                set -e
 
-            echo "Checking cluster inside minikube..."
-            docker exec minikube minikube kubectl -- config current-context
-            docker exec minikube minikube kubectl -- get nodes
+                echo "Available contexts:"
+                kubectl config get-contexts
 
-            echo "Copying deployment manifest..."
-            docker cp deployment.yaml minikube:/tmp/deployment.yaml
+                echo "Switching to docker-desktop..."
+                kubectl config use-context docker-desktop
 
-            echo "Applying deployment..."
-            docker exec minikube minikube kubectl -- apply -f /tmp/deployment.yaml
+                echo "Verifying active context..."
+                kubectl config current-context
+                kubectl get nodes
 
-            echo "Checking workloads..."
-            docker exec minikube minikube kubectl -- get deployments
-            docker exec minikube minikube kubectl -- get pods -o wide
-        '''
+                echo "Applying deployment..."
+                kubectl apply -f deployment.yaml
+
+                echo "Checking deployment..."
+                kubectl get deployments
+                kubectl get pods -o wide
+            '''
+        }
     }
 }
     }
